@@ -9,22 +9,21 @@ function Scope() {
 }
 
 Scope.prototype.$watch = function (getter, listener, equality) {
-    var watcher;
     if (_.isFunction(getter)) {
-        watcher = {
+        var watcher = {
             enabled: true,
             getter: getter,
             listener: listener || function () {},
             equality: equality || false // or !!equality
         };
         this.$$watchers.push(watcher);
-    } else {
-        throw 'first parameter should be a function';
+
+        return {
+            enable: function () { watcher.enabled = true; },
+            disable: function () { watcher.enabled = false; }
+        };
     }
-    return {
-        enable: function () { watcher.enabled = true; },
-        disable: function () { watcher.enabled = false; }
-    };
+    throw 'first parameter should be a function';
 };
 
 Scope.prototype.$watchGroup = function (getters, listener) {

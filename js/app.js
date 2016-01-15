@@ -46,7 +46,6 @@ scope.$apply(function (scope) {
         console.log('Async executed');
     });
 
-
     //• postDigest – set of functions, that should be processed after digest completed,
     scope.$postDigest(function () {
         throw 'postDigest exception';
@@ -62,6 +61,7 @@ watcher.enable();
 scope.$apply(function (scope) {
     scope.prop1 = '2';
 });
+
 
 
 //• digest – processes all of the watchers of the current scope and also async queue and post digest functionality
