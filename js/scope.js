@@ -9,26 +9,31 @@ function Scope() {
 }
 
 Scope.prototype.$watch = function (getter, listener, equality) {
-    if (typeof getter === 'function') {
-        this.$$watchers.push({
+    var watcher;
+    if (_.isFunction(getter)) {
+        watcher = {
+            enabled: true,
             getter: getter,
             listener: listener || function () {},
             equality: equality || false // or !!equality
-        });
+        };
+        this.$$watchers.push(watcher);
     } else {
         throw 'first parameter should be a function';
     }
+    return {
+        enable: function () { watcher.enabled = true; },
+        disable: function () { watcher.enabled = false; }
+    };
 };
 
-Scope.prototype.$watchGroup = function(getters, listener) {
+Scope.prototype.$watchGroup = function (getters, listener) {
     var self = this;
     if (_.isArray(getters) && getters.length > 0) {
         self.$watch(function () {
-            var values = [];
-            getters.forEach(function (getter) {
-                values.push(getter(self));
+            return getters.map(function (getter) {
+                return getter(self);
             });
-            return values;
         }, listener, true);
     }
 };
@@ -40,7 +45,9 @@ Scope.prototype.$postDigest = function (expr) {
 Scope.prototype.$apply = function (expr) {
     this.$$beginPhase('apply');
     try {
-        return this.$eval(expr);
+        if (_.isFunction(expr)) {
+            return this.$eval(expr);
+        }
     } catch (e) {
         console.error(e);
     } finally {
@@ -60,17 +67,19 @@ Scope.prototype.$digest = function (depth) {
     this.$$invokeAsync();
 
     this.$$watchers.forEach(function (watcher) {
-        var oldValue = watcher.lastValue,
-            newValue = watcher.getter(self);
+        if (watcher.enabled) {
+            var oldValue = watcher.lastValue,
+                newValue = watcher.getter(self);
 
-        if (!self.$$isEqual(newValue, oldValue, watcher.equality)) {
-            try {
-                watcher.listener(newValue, oldValue, this);
-            } catch (e) {
-                console.error(e);
+            if (!self.$$isEqual(newValue, oldValue, watcher.equality)) {
+                try {
+                    watcher.listener(newValue, oldValue, this);
+                } catch (e) {
+                    console.error(e);
+                }
+                watcher.lastValue = newValue;
+                watched = true;
             }
-            watcher.lastValue = newValue;
-            watched = true;
         }
     });
 
@@ -120,7 +129,7 @@ Scope.prototype.$$invokePostDigest = function () {
 };
 
 Scope.prototype.$$phaseExecuting = function () {
-    return this.$$phase === undefined;
+    return this.$$phase !== undefined;
 };
 
 Scope.prototype.$$beginPhase = function (name) {

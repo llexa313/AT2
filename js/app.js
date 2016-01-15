@@ -11,7 +11,7 @@ scope.$watch(
     }
 );
 
-scope.$watch(
+var watcher = scope.$watch(
     function (scope) { return scope.prop1; },
     function (value, oldValue) {
         console.log('Watch executed: prop1 changed from "' + oldValue + '" to "' + value + '"');
@@ -28,6 +28,8 @@ scope.$watchGroup(
         console.log('WatchGroup executed:  [' + oldValues + '] => [' + values + ']');
     }
 );
+
+watcher.disable();
 
 //• apply – should get as input any expression for execute as optional parameter,
 scope.$apply(function (scope) {
@@ -53,6 +55,12 @@ scope.$apply(function (scope) {
     scope.$postDigest(function () {
         console.log('PostDigest executed');
     });
+});
+
+watcher.enable();
+
+scope.$apply(function (scope) {
+    scope.prop1 = '2';
 });
 
 
