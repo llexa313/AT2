@@ -29,7 +29,7 @@ scope.$watchGroup(
     }
 );
 
-watcher.disable();
+
 
 //• apply – should get as input any expression for execute as optional parameter,
 scope.$apply(function (scope) {
@@ -56,7 +56,7 @@ scope.$apply(function (scope) {
     });
 });
 
-watcher.enable();
+watcher();
 
 scope.$apply(function (scope) {
     scope.prop1 = '2';

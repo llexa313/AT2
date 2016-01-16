@@ -9,21 +9,18 @@ function Scope() {
 }
 
 Scope.prototype.$watch = function (getter, listener, equality) {
-    if (_.isFunction(getter)) {
-        var watcher = {
-            enabled: true,
-            getter: getter,
-            listener: listener || function () {},
-            equality: equality || false // or !!equality
-        };
-        this.$$watchers.push(watcher);
+    var self = this, watcher = {
+        getter: getter,
+        listener: listener || function () {},
+        equality: equality || false // or !!equality
+    };
 
-        return {
-            enable: function () { watcher.enabled = true; },
-            disable: function () { watcher.enabled = false; }
-        };
+    if (_.isFunction(getter)) {
+        this.$$watchers.push(watcher);
+        return function () { _.remove(self.$$watchers, watcher); };
     }
-    throw 'first parameter should be a function';
+
+    throw 'First parameter should be a function';
 };
 
 Scope.prototype.$watchGroup = function (getters, listener) {
@@ -66,19 +63,17 @@ Scope.prototype.$digest = function (depth) {
     this.$$invokeAsync();
 
     this.$$watchers.forEach(function (watcher) {
-        if (watcher.enabled) {
+        try {
             var oldValue = watcher.lastValue,
                 newValue = watcher.getter(self);
 
             if (!self.$$isEqual(newValue, oldValue, watcher.equality)) {
-                try {
-                    watcher.listener(newValue, oldValue, this);
-                } catch (e) {
-                    console.error(e);
-                }
+                watcher.listener(newValue, oldValue, self);
                 watcher.lastValue = newValue;
                 watched = true;
             }
+        } catch (e) {
+            console.error(e);
         }
     });
 
